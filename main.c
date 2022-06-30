@@ -6,7 +6,7 @@
 /*   By: pvznuzda <pashavznuzdajev@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/28 19:47:12 by pvznuzda          #+#    #+#             */
-/*   Updated: 2022/06/30 15:59:07 by pvznuzda         ###   ########.fr       */
+/*   Updated: 2022/06/30 16:18:54 by pvznuzda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,14 @@ char	**get_paths(char **envp)
 	return (paths);
 }
 
+char	**get_cmd_n_args(char *cmd)
+{
+	char	**cmd_n_args;
+	
+	cmd_n_args = ft_split(cmd, ' ');
+	return (cmd_n_args);
+}
+
 char	*get_cmd_path(char **paths, char *cmd)
 {
 	char	*cmd_path;
@@ -45,53 +53,49 @@ char	*get_cmd_path(char **paths, char *cmd)
 		cmd_path = ft_strjoin(paths[paths_i], "/");
 		cmd_path = ft_strjoin(cmd_path, cmd);
 		if (access(cmd_path, X_OK) == 0)
-		{
-			
-			printf("Path found: %s\n", cmd_path);
 			return (cmd_path);
-		}		
 		paths_i++;
 	}
-	printf("Path not found\n");
 	return (NULL);
 }
 
 int	main(int argc, char **argv, char **envp)
 {
 	char	**paths;
+	char	**cmd_n_args;
 	char	*cmd_path;
 	int		pipefd1[2];
 	int		infile;
 	int		outfile;
 	int		f;
 
-	infile = open(argv[1], O_RDONLY);
-	outfile = open(argv[2], O_WRONLY, O_TRUNC);
-	dup2(infile, 0);
+	
 	if (pipe(pipefd1) < 0)
 		return (0);
-
+	paths = get_paths(envp);
+	infile = open(argv[1], O_RDONLY);
+	outfile = open(argv[argc - 1], O_WRONLY, O_TRUNC);	
+	dup2(infile, 0);
 	f = fork();
 	if (f == 0)
 	{
 		close(pipefd1[0]);
 		dup2(pipefd1[1], 1);
-		paths = get_paths(envp);
-		cmd_path = get_cmd_path(paths, "cat");
-		execve(cmd_path, NULL, NULL);
+		cmd_n_args = get_cmd_n_args(argv[2]);
+		cmd_path = get_cmd_path(paths, cmd_n_args[0]);
+		cmd_n_args[0] = cmd_path;
+		execve(cmd_path, cmd_n_args, NULL);
 	}
 	f = fork();
 	if (f == 0)
 	{
 		close(pipefd1[1]);
-		char	*args[3];
-		args[0] = "/usr/bin/grep";
-		args[1] = "line";
-		args[2] = NULL;
+		cmd_n_args = get_cmd_n_args(argv[3]);
+		cmd_path = get_cmd_path(paths, cmd_n_args[0]);
+		cmd_n_args[0] = cmd_path;
 		dup2(pipefd1[0], 0);
 		dup2(outfile, 1);
-		execve("/usr/bin/grep", args, 0);
-		
+		execve(cmd_path, cmd_n_args, 0);
 	}
 	return (0);
 }
