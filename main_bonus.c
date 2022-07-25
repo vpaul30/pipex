@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <sys/wait.h>
 #include "libft/libft.h"
 
 char	**get_paths(char **envp)
@@ -59,6 +60,14 @@ char	*get_cmd_path(char **paths, char *cmd)
 	return (NULL);
 }
 
+int	check_here_doc(int argc, char **argv)
+{
+	int	i;
+
+	i = 0;
+	
+}
+
 int	main(int argc, char **argv, char **envp)
 {
 	char	**paths;
@@ -67,34 +76,44 @@ int	main(int argc, char **argv, char **envp)
 	int		pipefd[2];
 	int		infile;
 	int		outfile;
-	int		f;
+	int		forkid;
+	int		i;
 
-	if (pipe(pipefd) < 0)
-		return (0);
-	paths = get_paths(envp);
 	infile = open(argv[1], O_RDONLY);
-	outfile = open(argv[argc - 1], O_WRONLY | O_TRUNC);	
-	dup2(infile, 0);
-	f = fork();
-	if (f == 0)
+	outfile = open(argv[argc - 1], O_WRONLY | O_TRUNC);
+	paths = get_paths(envp);
+	i = 0;
+	// dup2(outfile, 1);
+	pipe(pipefd);
+	while (i < argc - 3)
 	{
-		// close(pipefd[0]);
-		dup2(pipefd[1], 1);
-		cmd_n_args = get_cmd_n_args(argv[2]);
-		cmd_path = get_cmd_path(paths, cmd_n_args[0]);
-		cmd_n_args[0] = cmd_path;
-		execve(cmd_path, cmd_n_args, NULL);
-	}
-	f = fork();
-	if (f == 0)
-	{
-		close(pipefd[1]);
-		cmd_n_args = get_cmd_n_args(argv[3]);
-		cmd_path = get_cmd_path(paths, cmd_n_args[0]);
-		cmd_n_args[0] = cmd_path;
-		dup2(pipefd[0], 0);
-		dup2(outfile, 1);
-		execve(cmd_path, cmd_n_args, 0);
+		// write(1, "here\n", 5);
+		if (i == 0)
+		{
+			dup2(infile, 0);
+			dup2(pipefd[1], 1);
+		}
+		else
+		{
+			close(pipefd[1]);
+			dup2(pipefd[0], 0);
+			if (i == argc - 4)
+				dup2(outfile, 1);
+			else
+			{
+				pipe(pipefd);
+				dup2(pipefd[1], 1);
+			}
+		}
+		forkid = fork();
+		if (forkid == 0)
+		{
+			cmd_n_args = get_cmd_n_args(argv[i + 2]);
+			cmd_path = get_cmd_path(paths, cmd_n_args[0]);
+			cmd_n_args[0] = cmd_path;
+			execve(cmd_path, cmd_n_args, 0);
+		}
+		i++;
 	}
 	close(infile);
 	close(outfile);
