@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   main_bonus.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: pvznuzda <pashavznuzdajev@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/28 19:47:12 by pvznuzda          #+#    #+#             */
-/*   Updated: 2022/06/30 16:18:54 by pvznuzda         ###   ########.fr       */
+/*   Updated: 2022/07/25 18:23:15 by pvznuzda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include "libft/libft.h"
+#include "gnl/get_next_line.h"
 
 char	**get_paths(char **envp)
 {
@@ -60,12 +61,11 @@ char	*get_cmd_path(char **paths, char *cmd)
 	return (NULL);
 }
 
-int	check_here_doc(int argc, char **argv)
+int	check_here_doc(char **argv)
 {
-	int	i;
-
-	i = 0;
-	
+	if (!ft_strncmp("here_doc", argv[1], 8))
+		return (1);
+	return  (0);	
 }
 
 int	main(int argc, char **argv, char **envp)
@@ -83,11 +83,23 @@ int	main(int argc, char **argv, char **envp)
 	outfile = open(argv[argc - 1], O_WRONLY | O_TRUNC);
 	paths = get_paths(envp);
 	i = 0;
-	// dup2(outfile, 1);
 	pipe(pipefd);
+	if (check_here_doc(argv))
+	{
+		i = 2;
+		char	*line;
+		while (1)
+		{
+			write(1, "here_doc> ", 10);
+			line = get_next_line(0);
+			if (line && !ft_strncmp(line, argv[2], ft_strlen(argv[2])) && line[ft_strlen(argv[2])] == '\n')
+				break;
+			if (line)
+				write(pipefd[1], line, ft_strlen(line));
+		}
+	}
 	while (i < argc - 3)
 	{
-		// write(1, "here\n", 5);
 		if (i == 0)
 		{
 			dup2(infile, 0);
