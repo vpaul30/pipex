@@ -2,7 +2,7 @@ CC = gcc
 
 FLAGS = -Wall -Wextra -Werror
 
-NAME = pipex
+NAME = pipex_bonus
 
 LIBFT = libft.a
 
