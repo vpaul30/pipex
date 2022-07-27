@@ -6,7 +6,7 @@
 /*   By: pvznuzda <pashavznuzdajev@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/28 19:47:12 by pvznuzda          #+#    #+#             */
-/*   Updated: 2022/07/26 18:52:45 by pvznuzda         ###   ########.fr       */
+/*   Updated: 2022/07/27 21:47:28 by pvznuzda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,13 @@
 #include <string.h>
 #include "libft/libft.h"
 #include "gnl/get_next_line.h"
+
+typedef struct s_vars
+{
+	int		argc;
+	char	**argv;
+	char	**envp;
+}	t_vars;
 
 char	**get_paths(char **envp)
 {
@@ -115,61 +122,101 @@ void	file_error(int argc, char **argv, char **envp, int file)
 	write(2, result_line, ft_strlen(result_line));
 }
 
+void	fork_n_execve(char **argv, char **paths, int *i)
+{
+	char	**cmd_n_args;
+	char	*cmd_path;
+	int		forkid;
+	int		j;
+	
+	forkid = fork();
+	if (forkid < 0)
+	{
+		strerror(errno);
+		exit(0);
+	}
+	if (forkid == 0)
+	{
+		cmd_n_args = get_cmd_n_args(argv[(*i) + 2]);
+		cmd_path = get_cmd_path(paths, cmd_n_args[0]);
+		cmd_n_args[0] = cmd_path;
+		execve(cmd_path, cmd_n_args, 0);
+	}
+	else
+		*i = *i + 1;
+}
+
+void	is_here_doc(t_vars vars, int *outfile, int *i, int pipefd[2])
+{
+	char	*line;
+	int		len;
+	
+	len = ft_strlen(vars.argv[2]);
+	*i = 2;
+	while (1)
+	{
+		write(1, "pipe here_doc> ", 15);
+		line = get_next_line(0);
+		if (line && !ft_strncmp(line, vars.argv[2], len) && line[len] == '\n')
+		{
+			free(line);
+			line = NULL;
+			break;
+		}
+		write(pipefd[1], line, ft_strlen(line));	
+		free(line);
+		line = NULL;
+	}
+	*outfile = open(vars.argv[vars.argc - 1],
+		O_WRONLY | O_CREAT | O_APPEND, 0644);
+	if (*outfile < 0)
+	{
+		file_error(vars.argc, vars.argv, vars.envp, 1);
+		exit(0);
+	}
+}
+
+void	no_here_doc(t_vars vars, int *infile, int *outfile, int *i)
+{
+	*infile = open(vars.argv[1], O_RDONLY);
+	if (*infile < 0)
+	{
+		file_error(vars.argc, vars.argv, vars.envp, 0);
+		exit(0);	
+	}
+	*outfile = open(vars.argv[vars.argc - 1],
+		O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (*outfile < 0)
+	{
+		file_error(vars.argc, vars.argv, vars.envp, 1);
+		exit(0);
+	}
+	*i = 0;
+}
+
 int	main(int argc, char **argv, char **envp)
 {
 	char	**paths;
-	char	**cmd_n_args;
-	char	*cmd_path;
+	char	*line;
 	int		pipefd[2];
 	int		infile;
 	int		outfile;
-	int		forkid;
 	int		i;
-
-	infile = open(argv[1], O_RDONLY);
-	if (infile < 0)
-	{
-		file_error(argc, argv, envp, 0);
-		exit(0);	
-	}
-	outfile = open(argv[argc - 1], O_WRONLY | O_CREAT | O_APPEND, 0644);
-	if (outfile < 0)
-	{
-		file_error(argc, argv, envp, 1);
-		exit(0);
-	}
+	t_vars	vars;
+	
+	vars.argc = argc;
+	vars.argv = argv;
+	vars.envp = envp;
 	paths = get_paths(envp);
-	i = 0;
-	// pipe(pipefd);
 	if (pipe(pipefd) < 0)
 	{
-		// pipe error
 		strerror(errno);
 		exit(0);
 	}
 	if (check_here_doc(argv))
-	{
-		// here_doc APPEND
-		// no here_doc TRUNC
-		char	*line;
-		
-		i = 2;
-		while (1)
-		{
-			write(1, "pipe here_doc> ", 15);
-			line = get_next_line(0);
-			if (line && !ft_strncmp(line, argv[2], ft_strlen(argv[2])) && line[ft_strlen(argv[2])] == '\n')
-			{
-				free(line);
-				break;
-			}
-			if (line)
-			{
-				write(pipefd[1], line, ft_strlen(line));
-				free(line);
-			}
-		}
-	}
+		is_here_doc(vars, &outfile, &i, pipefd);
+	else
+		no_here_doc(vars, &infile, &outfile, &i);
 	while (i < argc - 3)
 	{
 		if (i == 0)
@@ -185,36 +232,26 @@ int	main(int argc, char **argv, char **envp)
 				dup2(outfile, 1);
 			else
 			{
-				// pipe(pipefd);
 				if (pipe(pipefd) < 0)
 				{
-					// pipe error
 					strerror(errno);
 					exit(0);
 				}
 				dup2(pipefd[1], 1);
 			}
 		}
-		forkid = fork();
-		if (forkid < 0)
-		{
-			strerror(errno);
-			exit(0);
-		}
-		if (forkid == 0)
-		{
-			cmd_n_args = get_cmd_n_args(argv[i + 2]);
-			cmd_path = get_cmd_path(paths, cmd_n_args[0]);
-			cmd_n_args[0] = cmd_path;
-			execve(cmd_path, cmd_n_args, 0);
-		}
-		else
-		{
-			wait(0);
-			i++;
-		}
+		fork_n_execve(argv, paths, &i);
 	}
-	close(infile);
-	close(outfile);
+	while (wait(0) > 0);
+	// close(infile);
+	// close(outfile);
+	// CLEAN PATHS
+	int	k = 0;
+	while (paths[k])
+	{
+		free(paths[k]);
+		k++;
+	}
+	free(paths);	
 	return (0);
 }
