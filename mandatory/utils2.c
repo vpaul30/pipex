@@ -6,7 +6,7 @@
 /*   By: pvznuzda <pashavznuzdajev@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/28 15:45:31 by pvznuzda          #+#    #+#             */
-/*   Updated: 2022/11/01 23:04:04 by pvznuzda         ###   ########.fr       */
+/*   Updated: 2022/07/28 16:39:57 by pvznuzda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,39 +36,27 @@ void	file_error(int argc, char **argv, char **envp, int file)
 	free(result_line);
 }
 
-int	fork_n_execve(t_vars vars, int pipefd[2], int *i, int stdin, int stdout)
+int	fork_n_execve(char **argv, char **paths, int *i)
 {
 	char	**cmd_n_args;
 	char	*cmd_path;
 	int		forkid;
 	int		j;
-
+	
 	forkid = fork();
 	if (forkid < 0)
 	{
-		perror("Error: ");
+		strerror(errno);
 		return (1);
 	}
 	if (forkid == 0)
 	{
-		close(stdin);
-		close(stdout);
-		cmd_n_args = get_cmd_n_args(vars.argv[(*i) + vars.here_doc + 2]);
-		cmd_path = get_cmd_path(vars.paths, cmd_n_args[0]);
-		if (!cmd_path)
-		{
-			j = -1;
-			while (cmd_n_args[++j])
-				free(cmd_n_args[j]);
-			free(cmd_n_args);
-			close(pipefd[0]);
-			close(pipefd[1]);
-			clear_paths_n_close_files(vars.paths, vars, 0);
-			write(2, "cmd error\n", 10);
-			exit (0);
-		}
-		else
-			execve(cmd_path, cmd_n_args, 0);
+		cmd_n_args = get_cmd_n_args(argv[(*i) + 2]);
+		cmd_path = get_cmd_path(paths, cmd_n_args[0]);
+		if (cmd_path == NULL)
+			return (1);
+		cmd_n_args[0] = cmd_path;
+		execve(cmd_path, cmd_n_args, 0);
 	}
 	else
 		*i = *i + 1;
@@ -77,22 +65,28 @@ int	fork_n_execve(t_vars vars, int pipefd[2], int *i, int stdin, int stdout)
 
 int	set_dups(t_vars vars, int pipefd[2], int *i)
 {
-	dup2(pipefd[0], 0);
-	close(pipefd[0]);
-	if (*i == vars.argc - 4 - vars.here_doc)
-	{
+	if (*i == 0 && *i == vars.argc - 4)
 		dup2(vars.outfile, 1);
-		close(vars.outfile);
+	else if (*i == 0)
+	{
+		dup2(vars.infile, 0);
+		dup2(pipefd[1], 1);
 	}
 	else
 	{
-		if (pipe(pipefd) < 0)
-		{
-			perror("Error:");
-			return (1);
-		}
-		dup2(pipefd[1], 1);
 		close(pipefd[1]);
+		dup2(pipefd[0], 0);
+		if (*i == vars.argc - 4)
+			dup2(vars.outfile, 1);
+		else
+		{
+			if (pipe(pipefd) < 0)
+			{
+				strerror(errno);
+				return (1);
+			}
+			dup2(pipefd[1], 1);
+		}
 	}
 	return (0);
 }
@@ -108,6 +102,13 @@ void	clear_paths_n_close_files(char **paths, t_vars vars, int close_files)
 		i++;
 	}
 	free(paths);
+	if (close_files == 1)
+	{
+		close(vars.infile);
+		close(vars.outfile);
+	}
+	else if (close_files == 2)
+		close(vars.infile);
 }
 
 void	my_exit(t_vars vars, int close_files)

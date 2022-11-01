@@ -1,0 +1,11 @@
+Makefile
+bonus
+c
+gnl
+infile.txt
+libft
+main.c
+mandatory
+outfile.txt
+pipex
+valgrind-out.txt

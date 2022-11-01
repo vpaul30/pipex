@@ -1,0 +1,151 @@
+==681== Memcheck, a memory error detector
+==681== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==681== Using Valgrind-3.19.0-8d3c8034b8-20220411 and LibVEX; rerun with -h for copyright info
+==681== Command: ./pipex Makefile les ceat out.txt
+==681== Parent PID: 1
+==681== 
+--681-- 
+--681-- Valgrind options:
+--681--    --leak-check=full
+--681--    --show-leak-kinds=all
+--681--    --track-origins=yes
+--681--    --verbose
+--681--    --log-file=valgrind-out.txt
+--681-- Contents of /proc/version:
+--681--   Linux version 5.10.76-linuxkit (root@buildkitsandbox) (gcc (Alpine 10.2.1_pre1) 10.2.1 20201203, GNU ld (GNU Binutils) 2.35.2) #1 SMP Mon Nov 8 10:21:19 UTC 2021
+--681-- 
+--681-- Arch and hwcaps: AMD64, LittleEndian, amd64-cx16-lzcnt-sse3-ssse3-avx-avx2-bmi-f16c-rdrand
+--681-- Page sizes: currently 4096, max supported 4096
+--681-- Valgrind library directory: /usr/libexec/valgrind
+--681-- Reading syms from /home/pvznuzda/Desktop/projects/pipex/pipex
+--681-- Reading syms from /lib/ld-musl-x86_64.so.1
+--681--    object doesn't have a symbol table
+--681-- Reading syms from /usr/libexec/valgrind/memcheck-amd64-linux
+--681--    object doesn't have a dynamic symbol table
+--681-- Scheduler: using generic scheduler lock implementation.
+--681-- Reading suppressions file: /usr/libexec/valgrind/default.supp
+==681== embedded gdbserver: reading from /tmp/vgdb-pipe-from-vgdb-to-681-by-pvznuzda-on-alpine
+==681== embedded gdbserver: writing to   /tmp/vgdb-pipe-to-vgdb-from-681-by-pvznuzda-on-alpine
+==681== embedded gdbserver: shared mem   /tmp/vgdb-pipe-shared-mem-vgdb-681-by-pvznuzda-on-alpine
+==681== 
+==681== TO CONTROL THIS PROCESS USING vgdb (which you probably
+==681== don't want to do, unless you know exactly what you're doing,
+==681== or are doing some strange experiment):
+==681==   /usr/libexec/valgrind/../../bin/vgdb --pid=681 ...command...
+==681== 
+==681== TO DEBUG THIS PROCESS USING GDB: start GDB like this
+==681==   /path/to/gdb ./pipex
+==681== and then give GDB the following command
+==681==   target remote | /usr/libexec/valgrind/../../bin/vgdb --pid=681
+==681== --pid is optional if only one valgrind process is running
+==681== 
+--681-- Reading syms from /usr/libexec/valgrind/vgpreload_core-amd64-linux.so
+--681--    object doesn't have a symbol table
+--681-- Reading syms from /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so
+--681--    object doesn't have a symbol table
+--681-- REDIR: 0x405082f (libc.musl-x86_64.so.1:strlen) redirected to 0x48a7b10 (strlen)
+--681-- REDIR: 0x40505f1 (libc.musl-x86_64.so.1:strcpy) redirected to 0x48a7b72 (strcpy)
+--681-- REDIR: 0x4050534 (libc.musl-x86_64.so.1:strchr) redirected to 0x48a787c (strchr)
+--681-- REDIR: 0x4050935 (libc.musl-x86_64.so.1:strncmp) redirected to 0x48a7f6a (strncmp)
+--681-- REDIR: 0x4023529 (libc.musl-x86_64.so.1:malloc) redirected to 0x48a2650 (malloc)
+--682-- REDIR: 0x4023460 (libc.musl-x86_64.so.1:free) redirected to 0x48a4a8a (free)
+==682== 
+==682== HEAP SUMMARY:
+==682==     in use at exit: 172 bytes in 14 blocks
+==682==   total heap usage: 21 allocs, 7 frees, 289 bytes allocated
+==682== 
+==682== Searching for pointers to 14 not-freed blocks
+--683-- REDIR: 0x4023460 (libc.musl-x86_64.so.1:free) redirected to 0x48a4a8a (free)
+==682== Checked 30,848 bytes
+==682== 
+==682== 4 bytes in 1 blocks are indirectly lost in loss record 1 of 4
+==682==    at 0x48A26D5: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==682==    by 0x10A9A3: ft_substr (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682==    by 0x10A79D: ft_split (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682==    by 0x1095E3: get_cmd_n_args (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682==    by 0x109A11: fork_n_execve (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682==    by 0x1094B4: main (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682== 
+==682== 20 (16 direct, 4 indirect) bytes in 1 blocks are definitely lost in loss record 2 of 4
+==682==    at 0x48A26D5: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==682==    by 0x10A6D3: ft_split (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682==    by 0x1095E3: get_cmd_n_args (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682==    by 0x109A11: fork_n_execve (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682==    by 0x1094B4: main (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682== 
+==682== 67 bytes in 6 blocks are definitely lost in loss record 3 of 4
+==682==    at 0x48A26D5: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==682==    by 0x10A4DD: ft_strjoin (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682==    by 0x10962F: get_cmd_path (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682==    by 0x109A2B: fork_n_execve (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682==    by 0x1094B4: main (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682== 
+==682== 85 bytes in 6 blocks are definitely lost in loss record 4 of 4
+==682==    at 0x48A26D5: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==683== 
+==683== HEAP SUMMARY:
+==683==     in use at exit: 179 bytes in 14 blocks
+==683==   total heap usage: 21 allocs, 7 frees, 296 bytes allocated
+==683== 
+==682==    by 0x10A4DD: ft_strjoin (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682==    by 0x109646: get_cmd_path (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683== Searching for pointers to 14 not-freed blocks
+==682==    by 0x109A2B: fork_n_execve (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682==    by 0x1094B4: main (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683== Checked 30,848 bytes
+==683== 
+==682== 
+==682== LEAK SUMMARY:
+==683== 5 bytes in 1 blocks are indirectly lost in loss record 1 of 4
+==682==    definitely lost: 168 bytes in 13 blocks
+==682==    indirectly lost: 4 bytes in 1 blocks
+==683==    at 0x48A26D5: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==683==    by 0x10A9A3: ft_substr (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682==      possibly lost: 0 bytes in 0 blocks
+==682==    still reachable: 0 bytes in 0 blocks
+==683==    by 0x10A79D: ft_split (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683==    by 0x1095E3: get_cmd_n_args (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682==         suppressed: 0 bytes in 0 blocks
+==682== 
+==683==    by 0x109A11: fork_n_execve (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683==    by 0x1094B4: main (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==682== ERROR SUMMARY: 3 errors from 3 contexts (suppressed: 0 from 0)
+==683== 
+==683== 21 (16 direct, 5 indirect) bytes in 1 blocks are definitely lost in loss record 2 of 4
+==683==    at 0x48A26D5: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==683==    by 0x10A6D3: ft_split (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683==    by 0x1095E3: get_cmd_n_args (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683==    by 0x109A11: fork_n_execve (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683==    by 0x1094B4: main (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683== 
+==683== 67 bytes in 6 blocks are definitely lost in loss record 3 of 4
+==683==    at 0x48A26D5: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==683==    by 0x10A4DD: ft_strjoin (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683==    by 0x10962F: get_cmd_path (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683==    by 0x109A2B: fork_n_execve (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683==    by 0x1094B4: main (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683== 
+==683== 91 bytes in 6 blocks are definitely lost in loss record 4 of 4
+==683==    at 0x48A26D5: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==683==    by 0x10A4DD: ft_strjoin (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683==    by 0x109646: get_cmd_path (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683==    by 0x109A2B: fork_n_execve (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683==    by 0x1094B4: main (in /home/pvznuzda/Desktop/projects/pipex/pipex)
+==683== 
+==683== LEAK SUMMARY:
+==683==    definitely lost: 174 bytes in 13 blocks
+==683==    indirectly lost: 5 bytes in 1 blocks
+==683==      possibly lost: 0 bytes in 0 blocks
+==683==    still reachable: 0 bytes in 0 blocks
+==683==         suppressed: 0 bytes in 0 blocks
+==683== 
+==683== ERROR SUMMARY: 3 errors from 3 contexts (suppressed: 0 from 0)
+--681-- REDIR: 0x4023460 (libc.musl-x86_64.so.1:free) redirected to 0x48a4a8a (free)
+==681== 
+==681== HEAP SUMMARY:
+==681==     in use at exit: 0 bytes in 0 blocks
+==681==   total heap usage: 7 allocs, 7 frees, 117 bytes allocated
+==681== 
+==681== All heap blocks were freed -- no leaks are possible
+==681== 
+==681== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

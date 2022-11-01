@@ -6,7 +6,7 @@
 /*   By: pvznuzda <pashavznuzdajev@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/28 15:42:23 by pvznuzda          #+#    #+#             */
-/*   Updated: 2022/10/31 21:30:24 by pvznuzda         ###   ########.fr       */
+/*   Updated: 2022/07/28 17:38:50 by pvznuzda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,18 +41,15 @@ char	**get_cmd_n_args(char *cmd)
 char	*get_cmd_path(char **paths, char *cmd)
 {
 	char	*cmd_path;
-	char	*temp;
 	int		paths_i;
 
 	paths_i = 0;
 	while (paths[paths_i])
 	{
-		temp = ft_strjoin(paths[paths_i], "/");
-		cmd_path = ft_strjoin(temp, cmd);
-		free(temp);
+		cmd_path = ft_strjoin(paths[paths_i], "/");
+		cmd_path = ft_strjoin(cmd_path, cmd);
 		if (access(cmd_path, X_OK) == 0)
 			return (cmd_path);
-		free(cmd_path);
 		paths_i++;
 	}
 	return (NULL);
@@ -66,15 +63,14 @@ char	*get_shellname(char **envp)
 
 	if (!envp || !(*envp))
 		return (NULL);
-	i = 0;
-	while (envp[i] != NULL)
+	i = -1;
+	while (envp[++i] != NULL)
 	{
 		if (!ft_strncmp("SHELL=", envp[i], 6))
 			break;
-		i++;
 	}
 	if (envp[i] == NULL)
-		return (get_nothing());
+		return (NULL);
 	shellpath = ft_split(envp[i], '/');
 	i = -1;
 	while (shellpath[++i] && shellpath[i + 1] != NULL)
@@ -91,5 +87,4 @@ void	init_vars(int argc, char **argv, char **envp, t_vars *vars)
 	vars->argv = argv;
 	vars->envp = envp;
 	vars->paths = get_paths(envp);
-	vars->here_doc = 0;
 }
