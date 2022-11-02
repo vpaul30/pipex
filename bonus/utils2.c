@@ -51,6 +51,7 @@ int	fork_n_execve(t_vars vars, int pipefd[2], int *i, int stdin, int stdout)
 	}
 	if (forkid == 0)
 	{
+		close(pipefd[0]);
 		close(stdin);
 		close(stdout);
 		cmd_n_args = get_cmd_n_args(vars.argv[(*i) + vars.here_doc + 2]);
@@ -71,7 +72,10 @@ int	fork_n_execve(t_vars vars, int pipefd[2], int *i, int stdin, int stdout)
 			execve(cmd_path, cmd_n_args, 0);
 	}
 	else
+	{
+		// close(pipefd[1]);
 		*i = *i + 1;
+	}
 	return (0);
 }
 
