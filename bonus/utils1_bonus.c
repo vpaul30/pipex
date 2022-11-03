@@ -6,7 +6,7 @@
 /*   By: pvznuzda <pashavznuzdajev@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/28 15:42:23 by pvznuzda          #+#    #+#             */
-/*   Updated: 2022/10/31 21:30:24 by pvznuzda         ###   ########.fr       */
+/*   Updated: 2022/11/02 16:32:59 by pvznuzda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ char	**get_paths(char **envp)
 	while (*envp != NULL)
 	{
 		if (!ft_strncmp("PATH=", *envp, 5))
-			break;
+			break ;
 		envp++;
 	}
 	*envp += 5;
@@ -33,7 +33,7 @@ char	**get_paths(char **envp)
 char	**get_cmd_n_args(char *cmd)
 {
 	char	**cmd_n_args;
-	
+
 	cmd_n_args = ft_split(cmd, ' ');
 	return (cmd_n_args);
 }
@@ -70,7 +70,7 @@ char	*get_shellname(char **envp)
 	while (envp[i] != NULL)
 	{
 		if (!ft_strncmp("SHELL=", envp[i], 6))
-			break;
+			break ;
 		i++;
 	}
 	if (envp[i] == NULL)
@@ -92,4 +92,9 @@ void	init_vars(int argc, char **argv, char **envp, t_vars *vars)
 	vars->envp = envp;
 	vars->paths = get_paths(envp);
 	vars->here_doc = 0;
+	vars->saved_stdin = dup(0);
+	vars->saved_stdout = dup(1);
+	vars->pipefd[0] = -1;
+	vars->pipefd[1] = -1;
+	vars->i = 0;
 }

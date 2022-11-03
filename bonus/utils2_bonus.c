@@ -6,7 +6,7 @@
 /*   By: pvznuzda <pashavznuzdajev@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/28 15:45:31 by pvznuzda          #+#    #+#             */
-/*   Updated: 2022/11/01 23:04:04 by pvznuzda         ###   ########.fr       */
+/*   Updated: 2022/11/02 19:22:30 by pvznuzda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,32 @@ void	file_error(int argc, char **argv, char **envp, int file)
 	free(result_line);
 }
 
-int	fork_n_execve(t_vars vars, int pipefd[2], int *i, int stdin, int stdout)
+void	child_process(t_vars *vars, char **cmd_n_args, char *cmd_path)
+{
+	int	j;
+
+	close(vars->pipefd[0]);
+	close(vars->saved_stdin);
+	close(vars->saved_stdout);
+	cmd_n_args = get_cmd_n_args(vars->argv[(vars->i) + vars->here_doc + 2]);
+	cmd_path = get_cmd_path(vars->paths, cmd_n_args[0]);
+	if (!cmd_path)
+	{
+		j = -1;
+		while (cmd_n_args[++j])
+			free(cmd_n_args[j]);
+		free(cmd_n_args);
+		close(vars->pipefd[0]);
+		close(vars->pipefd[1]);
+		clear_paths_n_close_files(vars);
+		write(2, "command not found\n", 19);
+		exit (0);
+	}
+	else
+		execve(cmd_path, cmd_n_args, 0);
+}
+
+int	fork_n_execve(t_vars *vars)
 {
 	char	**cmd_n_args;
 	char	*cmd_path;
@@ -50,72 +75,26 @@ int	fork_n_execve(t_vars vars, int pipefd[2], int *i, int stdin, int stdout)
 		return (1);
 	}
 	if (forkid == 0)
-	{
-		close(pipefd[0]);
-		close(stdin);
-		close(stdout);
-		cmd_n_args = get_cmd_n_args(vars.argv[(*i) + vars.here_doc + 2]);
-		cmd_path = get_cmd_path(vars.paths, cmd_n_args[0]);
-		if (!cmd_path)
-		{
-			j = -1;
-			while (cmd_n_args[++j])
-				free(cmd_n_args[j]);
-			free(cmd_n_args);
-			close(pipefd[0]);
-			close(pipefd[1]);
-			clear_paths_n_close_files(vars.paths, vars, 0);
-			write(2, "cmd error\n", 10);
-			exit (0);
-		}
-		else
-			execve(cmd_path, cmd_n_args, 0);
-	}
+		child_process(vars, cmd_n_args, cmd_path);
 	else
-	{
-		// close(pipefd[1]);
-		*i = *i + 1;
-	}
+		vars->i = vars->i + 1;
 	return (0);
 }
 
-int	set_dups(t_vars vars, int pipefd[2], int *i)
+int	set_dups(t_vars *vars)
 {
-	dup2(pipefd[0], 0);
-	close(pipefd[0]);
-	if (*i == vars.argc - 4 - vars.here_doc)
+	dup2(vars->pipefd[0], 0);
+	close(vars->pipefd[0]);
+	if (vars->i == vars->argc - 4 - vars->here_doc && vars->outfile >= 0)
 	{
-		dup2(vars.outfile, 1);
-		close(vars.outfile);
+		dup2(vars->outfile, 1);
+		close(vars->outfile);
 	}
 	else
 	{
-		if (pipe(pipefd) < 0)
-		{
-			perror("Error:");
-			return (1);
-		}
-		dup2(pipefd[1], 1);
-		close(pipefd[1]);
+		my_pipe(vars);
+		dup2(vars->pipefd[1], 1);
+		close(vars->pipefd[1]);
 	}
 	return (0);
-}
-
-void	clear_paths_n_close_files(char **paths, t_vars vars, int close_files)
-{
-	int	i;
-	
-	i = 0;
-	while (paths[i])
-	{
-		free(paths[i]);
-		i++;
-	}
-	free(paths);
-}
-
-void	my_exit(t_vars vars, int close_files)
-{
-	clear_paths_n_close_files(vars.paths, vars, close_files);
-	exit (0);
 }

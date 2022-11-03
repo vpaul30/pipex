@@ -6,55 +6,59 @@
 /*   By: pvznuzda <pashavznuzdajev@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/28 19:47:12 by pvznuzda          #+#    #+#             */
-/*   Updated: 2022/07/28 17:01:53 by pvznuzda         ###   ########.fr       */
+/*   Updated: 2022/11/02 20:15:40 by pvznuzda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-void	check_open_err(t_vars vars)
+void	clear_paths_n_close_files(t_vars *vars)
 {
-	if (vars.open_err)
+	int	i;
+
+	i = 0;
+	while (vars->paths[i])
 	{
-		if (vars.open_err == 2)
-			my_exit(vars, 2);
-		else
-			my_exit(vars, 0);	
+		free(vars->paths[i]);
+		i++;
 	}
+	free(vars->paths);
+	if (vars->pipefd[0] != -1)
+		close(vars->pipefd[0]);
+	if (vars->pipefd[1] != -1)
+		close(vars->pipefd[1]);
+	if (vars->outfile >= 0)
+		close(vars->outfile);
+	dup2(vars->saved_stdin, 0);
+	close(vars->saved_stdin);
+	dup2(vars->saved_stdout, 1);
+	close(vars->saved_stdout);
+	while (wait(0) > 0)
+		;
 }
 
-void	check_args_amount(int argc)
+void	my_exit(t_vars *vars)
 {
-	if (argc != 4)
-	{
-		write(1, "Wrong amount of arguments!\n", 28);
-		exit (0);
-	}
+	clear_paths_n_close_files(vars);
+	exit (0);
 }
 
 int	main(int argc, char **argv, char **envp)
 {
-	int		pipefd[2];
-	int		i;
 	t_vars	vars;
-	
-	check_args_amount(argc);
+
+	if (argc != 5)
+		return (0);
 	init_vars(argc, argv, envp, &vars);
-	if (pipe(pipefd) < 0)
+	my_pipe(&vars);
+	no_here_doc(&vars);
+	while (vars.i < argc - 3)
 	{
-		strerror(errno);
-		my_exit(vars, 0);
+		if (set_dups(&vars))
+			my_exit(&vars);
+		if (fork_n_execve(&vars))
+			my_exit(&vars);
 	}
-	vars.open_err = no_here_doc(vars, &vars.infile, &vars.outfile, &i);
-	check_open_err(vars);
-	while (i < argc - 3)
-	{
-		if (set_dups(vars, pipefd, &i))
-			my_exit(vars, 1);
-		if (fork_n_execve(vars.argv, vars.paths, &i))
-			my_exit(vars, 1);
-	}
-	while (wait(0) > 0);
-	clear_paths_n_close_files(vars.paths, vars, 1);
+	clear_paths_n_close_files(&vars);
 	return (0);
 }

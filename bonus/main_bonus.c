@@ -1,56 +1,70 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   main_bonus.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: pvznuzda <pashavznuzdajev@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/06/28 19:47:12 by pvznuzda          #+#    #+#             */
-/*   Updated: 2022/11/01 23:03:31 by pvznuzda         ###   ########.fr       */
+/*   Updated: 2022/11/02 20:21:10 by pvznuzda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex_bonus.h"
 
+void	clear_paths_n_close_files(t_vars *vars)
+{
+	int	i;
+
+	i = 0;
+	while (vars->paths[i])
+	{
+		free(vars->paths[i]);
+		i++;
+	}
+	free(vars->paths);
+	if (vars->pipefd[0] != -1)
+		close(vars->pipefd[0]);
+	if (vars->pipefd[1] != -1)
+		close(vars->pipefd[1]);
+	if (vars->outfile >= 0)
+		close(vars->outfile);
+	dup2(vars->saved_stdin, 0);
+	close(vars->saved_stdin);
+	dup2(vars->saved_stdout, 1);
+	close(vars->saved_stdout);
+	while (wait(0) > 0)
+		;
+}
+
+void	my_exit(t_vars *vars)
+{
+	clear_paths_n_close_files(vars);
+	exit (0);
+}
+
 int	main(int argc, char **argv, char **envp)
 {
-	int		pipefd[2];
-	int		i;
 	t_vars	vars;
+
 	if (argc < 4)
 		return (0);
-	int stdin = dup(0);
-	int stdout = dup(1);
-	
 	init_vars(argc, argv, envp, &vars);
-	if (pipe(pipefd) < 0)
-	{
-		perror("");
-		my_exit(vars, 0);
-	}
+	my_pipe(&vars);
 	if (check_here_doc(argv))
 	{
-		vars.here_doc = 1;	
-		vars.open_err = is_here_doc(&vars, &i, pipefd);
+		vars.here_doc = 1;
+		is_here_doc(&vars);
 	}
 	else
-		vars.open_err = no_here_doc(&vars, &i, pipefd);
-	check_open_err(vars);
-	i = 0;
-	while (i < argc - 3 - vars.here_doc)
+		no_here_doc(&vars);
+	while (vars.i < argc - 3 - vars.here_doc)
 	{
-		if (set_dups(vars, pipefd, &i))
-			my_exit(vars, 1);
-		if (fork_n_execve(vars, pipefd, &i, stdin, stdout))
-			my_exit(vars, 1);
+		if (set_dups(&vars))
+			my_exit(&vars);
+		if (fork_n_execve(&vars))
+			my_exit(&vars);
 	}
-	close(pipefd[0]);
-	close(vars.outfile);
-	dup2(stdin, 0);
-	close(stdin);
-	dup2(stdout, 1);
-	close(stdout);
-	clear_paths_n_close_files(vars.paths, vars, 1);
-	while (wait(0) > 0);
+	clear_paths_n_close_files(&vars);
 	return (0);
 }

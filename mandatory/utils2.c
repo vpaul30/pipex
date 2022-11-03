@@ -6,11 +6,11 @@
 /*   By: pvznuzda <pashavznuzdajev@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/28 15:45:31 by pvznuzda          #+#    #+#             */
-/*   Updated: 2022/07/28 16:39:57 by pvznuzda         ###   ########.fr       */
+/*   Updated: 2022/11/02 20:14:49 by pvznuzda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "pipex_bonus.h"
+#include "pipex.h"
 
 void	file_error(int argc, char **argv, char **envp, int file)
 {
@@ -36,83 +36,65 @@ void	file_error(int argc, char **argv, char **envp, int file)
 	free(result_line);
 }
 
-int	fork_n_execve(char **argv, char **paths, int *i)
+void	child_process(t_vars *vars, char **cmd_n_args, char *cmd_path)
+{
+	int	j;
+
+	close(vars->pipefd[0]);
+	close(vars->saved_stdin);
+	close(vars->saved_stdout);
+	cmd_n_args = get_cmd_n_args(vars->argv[(vars->i) + 2]);
+	cmd_path = get_cmd_path(vars->paths, cmd_n_args[0]);
+	if (!cmd_path)
+	{
+		j = -1;
+		while (cmd_n_args[++j])
+			free(cmd_n_args[j]);
+		free(cmd_n_args);
+		close(vars->pipefd[0]);
+		close(vars->pipefd[1]);
+		clear_paths_n_close_files(vars);
+		write(2, "command not found\n", 19);
+		exit (0);
+	}
+	else
+		execve(cmd_path, cmd_n_args, 0);
+}
+
+int	fork_n_execve(t_vars *vars)
 {
 	char	**cmd_n_args;
 	char	*cmd_path;
 	int		forkid;
 	int		j;
-	
+
 	forkid = fork();
 	if (forkid < 0)
 	{
-		strerror(errno);
+		perror("Error: ");
 		return (1);
 	}
 	if (forkid == 0)
-	{
-		cmd_n_args = get_cmd_n_args(argv[(*i) + 2]);
-		cmd_path = get_cmd_path(paths, cmd_n_args[0]);
-		if (cmd_path == NULL)
-			return (1);
-		cmd_n_args[0] = cmd_path;
-		execve(cmd_path, cmd_n_args, 0);
-	}
+		child_process(vars, cmd_n_args, cmd_path);
 	else
-		*i = *i + 1;
+		vars->i = vars->i + 1;
 	return (0);
 }
 
-int	set_dups(t_vars vars, int pipefd[2], int *i)
+int	set_dups(t_vars *vars)
 {
-	if (*i == 0 && *i == vars.argc - 4)
-		dup2(vars.outfile, 1);
-	else if (*i == 0)
+	dup2(vars->pipefd[0], 0);
+	close(vars->pipefd[0]);
+	if (vars->i == vars->argc - 4 && vars->outfile >= 0)
 	{
-		dup2(vars.infile, 0);
-		dup2(pipefd[1], 1);
+		dup2(vars->outfile, 1);
+		close(vars->outfile);
 	}
 	else
 	{
-		close(pipefd[1]);
-		dup2(pipefd[0], 0);
-		if (*i == vars.argc - 4)
-			dup2(vars.outfile, 1);
-		else
-		{
-			if (pipe(pipefd) < 0)
-			{
-				strerror(errno);
-				return (1);
-			}
-			dup2(pipefd[1], 1);
-		}
+		my_pipe(vars);
+		dup2(vars->pipefd[1], 1);
+		close(vars->pipefd[1]);
 	}
 	return (0);
-}
-
-void	clear_paths_n_close_files(char **paths, t_vars vars, int close_files)
-{
-	int	i;
-	
-	i = 0;
-	while (paths[i])
-	{
-		free(paths[i]);
-		i++;
-	}
-	free(paths);
-	if (close_files == 1)
-	{
-		close(vars.infile);
-		close(vars.outfile);
-	}
-	else if (close_files == 2)
-		close(vars.infile);
-}
-
-void	my_exit(t_vars vars, int close_files)
-{
-	clear_paths_n_close_files(vars.paths, vars, close_files);
-	exit (0);
 }

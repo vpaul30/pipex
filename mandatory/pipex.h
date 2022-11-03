@@ -1,17 +1,17 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pipex_bonus.h                                      :+:      :+:    :+:   */
+/*   pipex.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: pvznuzda <pashavznuzdajev@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/28 15:41:14 by pvznuzda          #+#    #+#             */
-/*   Updated: 2022/07/28 16:21:37 by pvznuzda         ###   ########.fr       */
+/*   Updated: 2022/11/02 20:17:30 by pvznuzda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PIPEX_BONUS
-# define PIPEX_BONUS
+#ifndef PIPEX_H
+# define PIPEX_H
 
 # include <stdio.h>
 # include <unistd.h>
@@ -31,21 +31,26 @@ typedef struct s_vars
 	int		infile;
 	int		outfile;
 	char	**paths;
-	int		open_err;
+	int		saved_stdin;
+	int		saved_stdout;
+	int		pipefd[2];
+	int		i;
 }	t_vars;
 
 int		check_here_doc(char **argv);
-int		is_here_doc(t_vars vars, int *outfile, int *i, int pipefd[2]);
-int		no_here_doc(t_vars vars, int *infile, int *outfile, int *i);
+int		no_here_doc(t_vars *vars);
 char	**get_paths(char **envp);
 char	**get_cmd_n_args(char *cmd);
 char	*get_cmd_path(char **paths, char *cmd);
 char	*get_shellname(char **envp);
 void	init_vars(int argc, char **argv, char **envp, t_vars *vars);
 void	file_error(int argc, char **argv, char **envp, int file);
-int		fork_n_execve(char **argv, char **paths, int *i);
-int		set_dups(t_vars vars, int pipefd[2], int *i);
-void	clear_paths_n_close_files(char **paths, t_vars vars, int close_files);
-void	my_exit(t_vars vars, int close_files);
+int		fork_n_execve(t_vars *vars);
+int		set_dups(t_vars *vars);
+void	clear_paths_n_close_files(t_vars *vars);
+void	my_exit(t_vars *vars);
+char	*get_nothing(void);
+int		check_cmd_path(char **argv, char **paths, int *i);
+void	my_pipe(t_vars *vars);
 
 #endif
